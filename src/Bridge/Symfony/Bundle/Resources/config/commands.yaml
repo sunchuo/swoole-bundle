@@ -53,3 +53,6 @@ services:
         tags: [ { name: console.command, command: 'swoole:server:profile' } ]
         arguments:
             $serverConfigurator: '@swoole_bundle.server.http_server.configurator.for_server_profile_command'
+
+    K911\Swoole\Bridge\Symfony\Bundle\Command\ServerTestCommand:
+        tags: [ { name: console.command, command: 'swoole:server:test' } ]
