@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace K911\Swoole\Server\Config;
 
 use Assert\Assertion;
+use K911\Swoole\Server\ServerFactory;
 
 final class Listeners
 {

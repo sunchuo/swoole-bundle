@@ -9,11 +9,11 @@ use K911\Swoole\Server\Config\EventsCallbacks;
 use K911\Swoole\Server\Config\Listener;
 use K911\Swoole\Server\Config\ListenerConfig;
 use K911\Swoole\Server\Config\Listeners;
-use K911\Swoole\Server\Config\ServerFactory;
 use K911\Swoole\Server\Config\Socket;
 use K911\Swoole\Server\HttpServerConfiguration;
 use K911\Swoole\Server\LifecycleHandler\SigIntHandler;
 use K911\Swoole\Server\RequestHandler\RequestHandlerInterface;
+use K911\Swoole\Server\ServerFactory;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -34,9 +34,7 @@ final class ServerTestCommand extends Command
         RequestHandlerInterface $requestHandler,
         HttpServerConfiguration $configuration,
         ParameterBagInterface $parameterBag
-    )
-    {
-
+    ) {
         parent::__construct();
         $this->configuration = $configuration;
         $this->requestHandler = $requestHandler;

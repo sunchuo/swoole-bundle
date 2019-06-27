@@ -7,6 +7,7 @@ namespace K911\Swoole\Server\Config;
 use Assert\Assertion;
 use K911\Swoole\Server\LifecycleHandler\ServerStartHandlerInterface;
 use K911\Swoole\Server\RequestHandler\RequestHandlerInterface;
+use K911\Swoole\Server\ServerFactory;
 
 final class EventsCallbacks
 {
@@ -71,7 +72,7 @@ final class EventsCallbacks
 
     public function register(string $event, callable $eventCallback, int $priority = 100): void
     {
-        $event = \strtolower($event);
+        $event = \mb_strtolower($event);
         Assertion::keyExists(self::SERVER_EVENTS_BY_TYPE, $event, 'Event name "%s" is invalid.');
 
         $callbackPriorityPair = [$eventCallback, $priority];

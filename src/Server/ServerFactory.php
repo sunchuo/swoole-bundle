@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
-namespace K911\Swoole\Server\Config;
+namespace K911\Swoole\Server;
 
 use Assert\Assertion;
-use K911\Swoole\Server\HttpServerConfiguration;
+use K911\Swoole\Server\Config\EventsCallbacks;
+use K911\Swoole\Server\Config\Listener;
+use K911\Swoole\Server\Config\Listeners;
 use Swoole\Http\Server as SwooleHttpServer;
 use Swoole\Server as SwooleServer;
 use Swoole\WebSocket\Server as SwooleWebsocketServer;
@@ -41,7 +43,7 @@ final class ServerFactory
     /**
      * @return \Swoole\Server|\Swoole\Http\Server|\Swoole\WebSocket\Server
      */
-    private function createServerInstance(): object
+    private function createSwooleServerInstance(): object
     {
         $runningMode = self::SWOOLE_RUNNING_MODE[$this->configuration->getRunningMode()];
         $serverClass = self::SERVER_CLASS_BY_TYPE[$this->inferredType()];
@@ -51,23 +53,22 @@ final class ServerFactory
     }
 
     /**
-     * @return \Swoole\Server|\Swoole\Http\Server|\Swoole\WebSocket\Server
+     * @param \Swoole\Server|\Swoole\Http\Server|\Swoole\WebSocket\Server $swooleServer
      */
-    public function make(): object
+    private function configureSwooleServer($swooleServer): void
     {
-        $server = $this->createServerInstance();
-        $server->set($this->configuration->getSwooleSettings());
+        $swooleServer->set($this->configuration->getSwooleSettings());
 
         $mainSocket = $this->listeners->mainSocket();
         if (0 === $mainSocket->port()) {
-            $this->listeners->changeMainSocket($mainSocket->withPort($server->port));
+            $this->listeners->changeMainSocket($mainSocket->withPort($swooleServer->port));
         }
 
         /** @var callable[] $callbacks */
         $callbacks = $this->callbacks->get();
         foreach ($callbacks as $eventName => $callback) {
             Assertion::isCallable($callback, \sprintf('Callback for event "%s" is not a callable. Actual type: %s', $eventName, \gettype($callback)));
-            $server->on($eventName, $callback);
+            $swooleServer->on($eventName, $callback);
         }
 
         /** @var Listener[] $listeners */
@@ -75,16 +76,22 @@ final class ServerFactory
         foreach ($listeners as $listener) {
             $socket = $listener->socket();
             /** @var \Swoole\Server\Port $port */
-            $port = $server->listen($socket->host(), $socket->port(), $socket->type());
+            $port = $swooleServer->listen($socket->host(), $socket->port(), $socket->type());
             $port->set($listener->config()->all());
             foreach ($listener->eventsCallbacks()->get() as $eventName => $callback) {
-
                 Assertion::isCallable($callback, \sprintf('Callback for event "%s" is not a callable. Actual type: %s', $eventName, \gettype($callback)));
-                $server->on($eventName, $callback);
+                $swooleServer->on($eventName, $callback);
             }
         }
+    }
 
-        return $server;
+    public function make(): Server
+    {
+        $swooleServer = $this->createSwooleServerInstance();
+
+        $this->configureSwooleServer($swooleServer);
+
+        return new Server($swooleServer, $this->listeners, $this->configuration, $this->callbacks);
     }
 
     public function inferredType(): string
